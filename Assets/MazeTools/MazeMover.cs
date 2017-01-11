@@ -7,15 +7,25 @@ public class MazeMover : MonoBehaviour {
     public float speed = 10;
     List<Vector2> floorTiles;
     List<Vector2> visitedTiles;
+    List<Vector2> solvedPath;
+
+    public enum MovementTypes {
+        random,
+        solved
+    }
+
+    public MovementTypes movementType;
 
     Vector2 moveTarget;
     Vector2 currentPos;
     Vector2 target;
     float alpha = 0;
+    int solvedTileIndex = 0;
 
     // Use this for initialization
     void Start() {
         floorTiles = GameObject.Find("Maze").GetComponent<MazeData>().floorTiles;
+        solvedPath = GameObject.Find("Maze").GetComponent<MazeData>().pathTiles;
         currentPos = new Vector2(1, 1);
         moveTarget = new Vector2(1, 1);
         visitedTiles = new List<Vector2>();
@@ -40,13 +50,26 @@ public class MazeMover : MonoBehaviour {
 
     void GetNextMoveTarget() {
         currentPos = moveTarget;
-        List<Vector2> neighbors = SearchNeighbors(currentPos);
-        if(neighbors.Count == 0) {
-            visitedTiles.Clear();
-            visitedTiles.Add(currentPos);
-            neighbors = SearchNeighbors(currentPos);
+        switch(movementType) {
+            case MovementTypes.random:
+                List<Vector2> neighbors = SearchNeighbors(currentPos);
+                if (neighbors.Count == 0) {
+                    visitedTiles.Clear();
+                    visitedTiles.Add(currentPos);
+                    neighbors = SearchNeighbors(currentPos);
+                }
+                moveTarget = neighbors[UnityEngine.Random.Range(0, neighbors.Count)];
+                break;
+            case MovementTypes.solved:
+                if (solvedTileIndex < solvedPath.Count - 1) {
+                    solvedTileIndex++;
+                    moveTarget = solvedPath[solvedTileIndex];
+                }
+                break;
+            default:
+                break;
         }
-        moveTarget = neighbors[UnityEngine.Random.Range(0, neighbors.Count)];
+       
     }
 
     List<Vector2> SearchNeighbors(Vector2 cell) {
