@@ -29,16 +29,27 @@ public class MazeMover : MonoBehaviour
     // Use this for initialization
     private void Start()
     {
+        moveTarget = new Vector2(1,1);
+        visitedTiles = new List<Vector2>();
+
         floorTiles = GameObject.Find("Maze").GetComponent<MazeData>().floorTiles;
         solvedPath = GameObject.Find("Maze").GetComponent<MazeData>().pathTiles;
-        currentPos = new Vector2(1, 1);
-        moveTarget = new Vector2(1, 1);
-        if (movementType == MovementTypes.solved)
-        {
-            moveTarget = solvedPath[0];
-            GetNextMoveTarget();
+
+        switch (movementType) {
+            case MovementTypes.random:
+                moveTarget = floorTiles[Random.Range(0, floorTiles.Count)];
+                transform.position = moveTarget;
+                GetComponent<TrailRenderer>().startColor = GetComponent<Light>().color = Random.ColorHSV();
+                break;
+            case MovementTypes.solved:
+                moveTarget = solvedPath[0];
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
-        visitedTiles = new List<Vector2>();
+
+        GetNextMoveTarget();
+
     }
 
     // Update is called once per frame
