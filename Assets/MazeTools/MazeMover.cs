@@ -11,85 +11,84 @@ public class MazeMover : MonoBehaviour
         solved
     }
 
-    private float _alpha;
-    private Vector2 currentPos;
-    private List<Vector2> floorTiles;
+    private List<Vector2> _floorTiles;
 
-    public MovementTypes movementType;
+    public MovementTypes MovementType;
 
-    private Vector2 moveTarget;
-    private List<Vector2> solvedPath;
-    private int solvedTileIndex;
+    private Vector2 _moveTarget;
+    private List<Vector2> _solvedPath;
+    private int _solvedTileIndex;
 
-    public float speed = 10;
-    private Vector2 target;
-    private List<Vector2> visitedTiles;
-    public float zOffset = 0;
+    public float Speed = 10;
+    private Vector2 _target;
+    private List<Vector2> _visitedTiles;
+    public float ZOffset = 0;
+    public bool RandomStart;
 
     // Use this for initialization
     private void Start()
     {
-        moveTarget = new Vector2(1,1);
-        visitedTiles = new List<Vector2>();
+        _visitedTiles = new List<Vector2>();
 
-        floorTiles = GameObject.Find("Maze").GetComponent<MazeData>().floorTiles;
-        solvedPath = GameObject.Find("Maze").GetComponent<MazeData>().pathTiles;
+        _floorTiles = GameObject.Find("Maze").GetComponent<MazeData>().FloorTiles;
+        _solvedPath = GameObject.Find("Maze").GetComponent<MazeData>().PathTiles;
 
-        switch (movementType) {
+        switch (MovementType) {
             case MovementTypes.random:
-                moveTarget = floorTiles[Random.Range(0, floorTiles.Count)];
-                transform.position = moveTarget;
-                GetComponent<TrailRenderer>().startColor = GetComponent<Light>().color = Random.ColorHSV();
+                if (RandomStart)
+                    _target = _moveTarget = _floorTiles[Random.Range(0, _floorTiles.Count)];
+                else
+                {
+                    _target =_moveTarget = new Vector2((int)transform.position.x, (int)transform.position.z);
+                }
                 break;
             case MovementTypes.solved:
-                moveTarget = solvedPath[0];
+                _target = _moveTarget = _solvedPath[0];
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
 
-        GetNextMoveTarget();
+        transform.position = new Vector3(_target.x, ZOffset, _target.y);
+
+        //GetNextMoveTarget();
 
     }
 
     // Update is called once per frame
     private void Update()
     {
-        if (target != moveTarget)
+        if (_target != _moveTarget)
         {
-            _alpha += Time.deltaTime * speed;
-            if (_alpha >= 1) _alpha = 1;
-        }
-        else
+            _target = Vector2.MoveTowards(_target, _moveTarget, Time.deltaTime * Speed);
+
+            transform.position = new Vector3(_target.x, ZOffset, _target.y);
+        } else
         {
-            _alpha = 0;
-            visitedTiles.Add(moveTarget);
+            _visitedTiles.Add(_moveTarget);
             GetNextMoveTarget();
         }
-        target = Vector2.Lerp(currentPos, moveTarget, _alpha);
-        transform.position = new Vector3(target.x, zOffset, target.y);
     }
 
     private void GetNextMoveTarget()
     {
-        currentPos = moveTarget;
-        switch (movementType)
+        switch (MovementType)
         {
             case MovementTypes.random:
-                var neighbors = SearchNeighbors(currentPos);
+                List<Vector2> neighbors = SearchNeighbors(_target);
                 if (neighbors.Count == 0)
                 {
-                    visitedTiles.Clear();
-                    visitedTiles.Add(currentPos);
-                    neighbors = SearchNeighbors(currentPos);
+                    _visitedTiles.Clear();
+                    _visitedTiles.Add(_target);
+                    neighbors = SearchNeighbors(_target);
                 }
-                moveTarget = neighbors[Random.Range(0, neighbors.Count)];
+                _moveTarget = neighbors[Random.Range(0, neighbors.Count)];
                 break;
             case MovementTypes.solved:
-                if (solvedTileIndex < solvedPath.Count - 1)
+                if (_solvedTileIndex < _solvedPath.Count - 1)
                 {
-                    solvedTileIndex++;
-                    moveTarget = solvedPath[solvedTileIndex];
+                    _solvedTileIndex++;
+                    _moveTarget = _solvedPath[_solvedTileIndex];
                 }
                 else
                 {
@@ -117,10 +116,10 @@ public class MazeMover : MonoBehaviour
         };
 
 
-        var possibleCells = new List<Vector2>();
+        List<Vector2> possibleCells = new List<Vector2>();
 
         foreach (Vector2 tile in neighbors)
-            if (floorTiles.Contains(tile) && !visitedTiles.Contains(tile))
+            if (_floorTiles.Contains(tile) && !_visitedTiles.Contains(tile))
                 possibleCells.Add(tile);
 
         return possibleCells;

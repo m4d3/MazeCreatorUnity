@@ -7,7 +7,7 @@ namespace Assets.MazeTools
     {
         private int _spawnCount;
         private float _spawnDelay;
-        public int currentWave = -1;
+        public int CurrentWave = -1;
 
         [System.Serializable]
         public struct WaveInfo
@@ -33,7 +33,7 @@ namespace Assets.MazeTools
             while (_spawnCount > 0)
             {
                 Debug.Log("Spawning");
-                Instantiate(Data[currentWave].SpawnObject, transform.position, Quaternion.identity);
+                Instantiate(Data[CurrentWave].SpawnObject, transform.position, Quaternion.identity);
                 _spawnCount--;
 
                 yield return new WaitForSeconds(_spawnDelay);
@@ -45,16 +45,16 @@ namespace Assets.MazeTools
 
         private IEnumerator StartWave()
         {
-            if (currentWave >= Data.Length - 1) yield break;
+            if (CurrentWave >= Data.Length - 1) yield break;
 
-            currentWave++;
+            CurrentWave++;
 
-            yield return new WaitForSeconds(Data[currentWave].WaveDelay);
+            yield return new WaitForSeconds(Data[CurrentWave].WaveDelay);
 
             Debug.Log("new Wave");
 
-            _spawnCount = Data[currentWave].SpawnCount;
-            _spawnDelay = Data[currentWave].SpawnDelay;
+            _spawnCount = Data[CurrentWave].SpawnCount;
+            _spawnDelay = Data[CurrentWave].SpawnDelay;
 
             StartCoroutine("Spawn");
 

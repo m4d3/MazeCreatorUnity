@@ -5,184 +5,185 @@
 */
 
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 public class MazeCreator : EditorWindow
 {
-    private bool addFloor;
-    private bool addWalls;
-    private List<Vector2> cells;
-    private bool clearTiles;
-    private GameObject container;
+    private bool _addFloor;
+    private bool _addWalls;
+    private List<Vector2> _cells;
+    private bool _clearTiles;
+    private GameObject _container;
 
-    private MazeData data;
-    private Vector2 endTile;
-    private Vector2 entryTile;
-    private List<Vector2> floor;
-    private GameObject floorPrefab;
-    private bool generateCollider;
-    private int height;
-    private int minPathLength;
-    private float processTime;
-    private bool randomizeMaze;
-    private List<Vector2> solvedPath;
+    private MazeData _data;
+    private Vector2 _endTile;
+    private Vector2 _entryTile;
+    private List<Vector2> _floor;
+    private GameObject _floorPrefab;
+    private bool _generateCollider;
+    private int _height;
+    private int _minPathLength;
+    private float _processTime;
+    private bool _randomizeMaze;
+    private List<Vector2> _solvedPath;
 
-    private List<Vector2> unvisitedCells;
-    private GameObject wallPrefab;
-    private List<Vector2> walls;
-    private int width;
-
-    private Vector2 startTile;
+    private List<Vector2> _unvisitedCells;
+    private GameObject _wallPrefab;
+    private List<Vector2> _walls;
+    private int _width;
 
     [MenuItem("Maze And Grid Tools/Show Maze Creator")]
     private static void Create()
     {
-        var window = (MazeCreator) GetWindow(typeof(MazeCreator));
+        MazeCreator window = (MazeCreator) GetWindow(typeof(MazeCreator));
     }
 
     private void OnGUI()
     {
-        width = EditorGUILayout.IntField("Maze Width:", width);
-        height = EditorGUILayout.IntField("Maze Height:", height);
-        container = EditorGUILayout.ObjectField("Container", container, typeof(Object), true) as GameObject;
-        wallPrefab = EditorGUILayout.ObjectField("Wall", wallPrefab, typeof(Object), true) as GameObject;
-        floorPrefab = EditorGUILayout.ObjectField("Floor", floorPrefab, typeof(Object), true) as GameObject;
-        addFloor = EditorGUILayout.Toggle("Add Floor", addFloor);
-        addWalls = EditorGUILayout.Toggle("Add Walls", addWalls);
-        generateCollider = EditorGUILayout.Toggle("Generate Collider", generateCollider);
+        _width = EditorGUILayout.IntField("Maze Width:", _width);
+        _height = EditorGUILayout.IntField("Maze Height:", _height);
+        _container = EditorGUILayout.ObjectField("Container", _container, typeof(Object), true) as GameObject;
+        _wallPrefab = EditorGUILayout.ObjectField("Wall", _wallPrefab, typeof(Object), true) as GameObject;
+        _floorPrefab = EditorGUILayout.ObjectField("Floor", _floorPrefab, typeof(Object), true) as GameObject;
+        _addFloor = EditorGUILayout.Toggle("Add Floor", _addFloor);
+        _addWalls = EditorGUILayout.Toggle("Add Walls", _addWalls);
+        _generateCollider = EditorGUILayout.Toggle("Generate Collider", _generateCollider);
 
 
         if (GUILayout.Button("Create Maze"))
         {
             Debug.Log("Creating Maze");
-            processTime = Time.realtimeSinceStartup;
+            _processTime = Time.realtimeSinceStartup;
             CreateMaze();
-            processTime = Time.realtimeSinceStartup - processTime;
-            Debug.Log("Maze created in: " + processTime + "seconds");
+            _processTime = Time.realtimeSinceStartup - _processTime;
+            Debug.Log("Maze created in: " + _processTime + "seconds");
         }
 
         if (GUILayout.Button("Combine Meshes"))
-            if (container.transform.childCount > 0)
+            if (_container != null && _container.transform.childCount > 0)
             {
-                CombineMeshes(container.transform.FindChild("Maze_Walls").gameObject);
-                if (container.transform.FindChild("Maze_Floor"))
-                    CombineMeshes(container.transform.FindChild("Maze_Floor").gameObject);
+                CombineMeshes(_container.transform.FindChild("Maze_Walls").gameObject);
+                if (_container.transform.FindChild("Maze_Floor"))
+                    CombineMeshes(_container.transform.FindChild("Maze_Floor").gameObject);
 
-                if (container.transform.FindChild("Maze_Path"))
-                    CombineMeshes(container.transform.FindChild("Maze_Path").gameObject);
+                if (_container.transform.FindChild("Maze_Path"))
+                    CombineMeshes(_container.transform.FindChild("Maze_Path").gameObject);
             }
 
         if (GUILayout.Button("Solve Maze"))
         {
-            SolveMaze(floor);
-            DrawTiles(solvedPath, "Maze_Path");
+            _solvedPath = SolveMaze(_floor, _entryTile, _endTile);
+
+            _data.PathTiles = _solvedPath;
+
+            DrawTiles(_solvedPath, "Maze_Path");
         }
 
         if (GUILayout.Button("Set Selected As Start"))
-        {
-            entryTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
-        }
+            _entryTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
 
         if (GUILayout.Button("Set Selected As End"))
-            endTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
+            _endTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
 
         if (GUILayout.Button("RandomSolve"))
         {
-            if (randomizeMaze)
+            if (_randomizeMaze)
                 CreateMaze();
 
-            solvedPath.Clear();
+            _solvedPath.Clear();
 
-            while (solvedPath.Count < minPathLength)
+            while (_solvedPath.Count < _minPathLength)
             {
-                entryTile = endTile = floor[Random.Range(0, floor.Count)];
-                while (endTile == entryTile) endTile = floor[Random.Range(0, floor.Count)];
-                SolveMaze(floor);
+                _entryTile = _endTile = _floor[Random.Range(0, _floor.Count)];
+                while (_endTile == _entryTile) _endTile = _floor[Random.Range(0, _floor.Count)];
+                _solvedPath = SolveMaze(_floor, _entryTile, _endTile);
             }
 
-            DrawTiles(solvedPath, "Maze_Path");
+            _data.PathTiles = new List<Vector2>();
+            _data.PathTiles.AddRange(_solvedPath);
+            _data.PathTiles.Reverse();
+
+            DrawTiles(_solvedPath, "Maze_Path");
         }
 
-        minPathLength = EditorGUILayout.IntField("Minimum path length:", minPathLength);
+        _minPathLength = EditorGUILayout.IntField("Minimum path length:", _minPathLength);
 
-        clearTiles = EditorGUILayout.Toggle("Clear Existing", clearTiles);
-        randomizeMaze = EditorGUILayout.Toggle("randomizeMaze", randomizeMaze);
+        _clearTiles = EditorGUILayout.Toggle("Clear Existing", _clearTiles);
+        _randomizeMaze = EditorGUILayout.Toggle("randomizeMaze", _randomizeMaze);
     }
 
     private void CreateMaze()
     {
-        if (width > 0 && height > 0)
+        if (_width > 0 && _height > 0)
         {
-            if (container == null) container = new GameObject("Maze");
-            else foreach (Transform child in container.transform) DestroyImmediate(child.gameObject);
+            if (_container == null) _container = new GameObject("Maze");
+            else foreach (Transform child in _container.transform) DestroyImmediate(child.gameObject);
 
-            data = !container.GetComponent<MazeData>() ? container.AddComponent<MazeData>() : container.GetComponent<MazeData>();
+            _data = !_container.GetComponent<MazeData>()
+                ? _container.AddComponent<MazeData>()
+                : _container.GetComponent<MazeData>();
 
-            unvisitedCells = new List<Vector2>();
-            walls = new List<Vector2>();
-            cells = new List<Vector2>();
-            floor = new List<Vector2>();
+            _unvisitedCells = new List<Vector2>();
+            _walls = new List<Vector2>();
+            _cells = new List<Vector2>();
+            _floor = new List<Vector2>();
 
-            for (var x = 0; x < 1 + width * 2; x++)
-            for (var y = 0; y < 1 + height * 2; y++)
+            for (int x = 0; x < 1 + _width * 2; x++)
+            for (int y = 0; y < 1 + _height * 2; y++)
                 if ((x + 1) % 2 == 0 && (y + 1) % 2 == 0)
                 {
-                    unvisitedCells.Add(new Vector2(x, y));
-                    floor.Add(new Vector2(x, y));
+                    _unvisitedCells.Add(new Vector2(x, y));
+                    _floor.Add(new Vector2(x, y));
                 }
                 else
                 {
-                    walls.Add(new Vector2(x, y));
+                    _walls.Add(new Vector2(x, y));
                 }
 
-            var startCell = unvisitedCells[Random.Range(0, unvisitedCells.Count)];
+            Vector2 startCell = _unvisitedCells[Random.Range(0, _unvisitedCells.Count)];
 
-            cells.Add(startCell);
+            _cells.Add(startCell);
 
-            while (cells.Count > 0) CheckNeighbors(cells[cells.Count - 1]);
+            while (_cells.Count > 0) CheckNeighbors(_cells[_cells.Count - 1]);
 
-            if (addWalls)
+            if (_addWalls)
             {
-                var wallsContainer = new GameObject("Maze_Walls");
-                wallsContainer.transform.parent = container.transform;
+                GameObject wallsContainer = new GameObject("Maze_Walls");
+                wallsContainer.transform.parent = _container.transform;
 
-                foreach (var wallPos in walls)
+                foreach (Vector2 wallPos in _walls)
                 {
-                    GameObject wall;
-
-                    if (wallPrefab != null)
-                        wall = Instantiate(wallPrefab, Vector3.zero, Quaternion.identity);
-                    else
-                        wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    GameObject wall = _wallPrefab != null ? Instantiate(_wallPrefab, Vector3.zero, Quaternion.identity) : GameObject.CreatePrimitive(PrimitiveType.Cube);
                     wall.transform.position = new Vector3(wallPos.x * wall.transform.localScale.x, 0,
                         wallPos.y * wall.transform.localScale.z);
                     wall.transform.parent = wallsContainer.transform;
                 }
             }
 
-            if (addFloor)
+            if (_addFloor)
             {
-                var floorContainer = new GameObject("Maze_Floor");
-                floorContainer.transform.parent = container.transform;
+                GameObject floorContainer = new GameObject("Maze_Floor");
+                floorContainer.transform.parent = _container.transform;
 
-                foreach (var floorPos in floor)
+                foreach (Vector2 floorPos in _floor)
                 {
                     GameObject floorObj;
 
-                    if (floorPrefab != null)
+                    if (_floorPrefab != null)
                     {
-                        floorObj = Instantiate(floorPrefab, Vector3.zero, Quaternion.identity);
+                        floorObj = Instantiate(_floorPrefab, Vector3.zero, Quaternion.identity);
                     }
                     else
                     {
                         floorObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        if (wallPrefab != null)
+                        if (_wallPrefab != null)
                         {
-                            floorObj.transform.localScale = new Vector3(wallPrefab.transform.localScale.x, 0.1f,
-                                wallPrefab.transform.localScale.z);
-                            floorObj.transform.position = new Vector3(floorPos.x * wallPrefab.transform.localScale.x,
-                                -wallPrefab.transform.localScale.y / 2, floorPos.y * wallPrefab.transform.localScale.z);
+                            floorObj.transform.localScale = new Vector3(_wallPrefab.transform.localScale.x, 0.1f,
+                                _wallPrefab.transform.localScale.z);
+                            floorObj.transform.position = new Vector3(floorPos.x * _wallPrefab.transform.localScale.x,
+                                -_wallPrefab.transform.localScale.y / 2, floorPos.y * _wallPrefab.transform.localScale.z);
                         }
                         else
                         {
@@ -195,8 +196,8 @@ public class MazeCreator : EditorWindow
                 }
             }
 
-            data.wallTiles = walls;
-            data.floorTiles = floor;
+            _data.WallTiles = _walls;
+            _data.FloorTiles = _floor;
         }
         else
         {
@@ -206,37 +207,37 @@ public class MazeCreator : EditorWindow
 
     private void CheckNeighbors(Vector2 cell)
     {
-        unvisitedCells.Remove(cell);
-        Vector2 newCell;
-        var neighbors = new List<Vector2>();
+        _unvisitedCells.Remove(cell);
 
-        neighbors.Add(new Vector2(cell.x + 2, cell.y));
-        neighbors.Add(new Vector2(cell.x - 2, cell.y));
-        neighbors.Add(new Vector2(cell.x, cell.y + 2));
-        neighbors.Add(new Vector2(cell.x, cell.y - 2));
+        List<Vector2> neighbors = new List<Vector2>
+        {
+            new Vector2(cell.x + 2, cell.y),
+            new Vector2(cell.x - 2, cell.y),
+            new Vector2(cell.x, cell.y + 2),
+            new Vector2(cell.x, cell.y - 2)
+        };
 
-        var newCells = new List<Vector2>();
 
-        for (var i = 0; i < neighbors.Count; i++) if (unvisitedCells.Contains(neighbors[i])) newCells.Add(neighbors[i]);
+        List<Vector2> newCells = neighbors.Where(t => _unvisitedCells.Contains(t)).ToList();
 
         if (newCells.Count > 0)
         {
-            var side = Random.Range(0, newCells.Count);
-            newCell = newCells[side];
-            cells.Add(newCell);
-            var passage = Vector2.zero;
+            int side = Random.Range(0, newCells.Count);
+            Vector2 newCell = newCells[side];
+            _cells.Add(newCell);
+            Vector2 passage = Vector2.zero;
 
             if (newCells[side].x > cell.x) passage = new Vector2(cell.x + 1, cell.y);
             if (newCells[side].x < cell.x) passage = new Vector2(cell.x - 1, cell.y);
             if (newCells[side].y > cell.y) passage = new Vector2(cell.x, cell.y + 1);
             if (newCells[side].y < cell.y) passage = new Vector2(cell.x, cell.y - 1);
 
-            walls.Remove(passage);
-            if (!floor.Contains(passage)) floor.Add(passage);
+            _walls.Remove(passage);
+            if (!_floor.Contains(passage)) _floor.Add(passage);
         }
         else
         {
-            cells.RemoveAt(cells.Count - 1);
+            _cells.RemoveAt(_cells.Count - 1);
         }
     }
 
@@ -244,9 +245,9 @@ public class MazeCreator : EditorWindow
     {
         objContainer.AddComponent<MeshFilter>();
         objContainer.AddComponent<MeshRenderer>();
-        var meshFilters = objContainer.GetComponentsInChildren<MeshFilter>();
-        var combine = new CombineInstance[meshFilters.Length];
-        var i = 0;
+        MeshFilter[] meshFilters = objContainer.GetComponentsInChildren<MeshFilter>();
+        CombineInstance[] combine = new CombineInstance[meshFilters.Length];
+        int i = 0;
         while (i < meshFilters.Length)
         {
             combine[i].mesh = meshFilters[i].sharedMesh;
@@ -257,10 +258,10 @@ public class MazeCreator : EditorWindow
         objContainer.transform.GetComponent<MeshFilter>().sharedMesh = new Mesh();
         objContainer.GetComponent<MeshFilter>().sharedMesh.CombineMeshes(combine);
 
-        if (generateCollider)
+        if (_generateCollider)
         {
-            var collider = objContainer.AddComponent(typeof(MeshCollider)) as MeshCollider;
-            collider.sharedMesh = objContainer.GetComponent<MeshFilter>().sharedMesh;
+            MeshCollider collider = objContainer.AddComponent(typeof(MeshCollider)) as MeshCollider;
+            if (collider != null) collider.sharedMesh = objContainer.GetComponent<MeshFilter>().sharedMesh;
         }
 
         //if (material != null) {
@@ -270,83 +271,83 @@ public class MazeCreator : EditorWindow
         objContainer.GetComponent<Renderer>().material = new Material(Shader.Find("Diffuse"));
         objContainer.gameObject.SetActive(true);
 
-        for (var j = meshFilters.Length - 1; j > 0; j--) DestroyImmediate(meshFilters[j].gameObject);
+        for (int j = meshFilters.Length - 1; j > 0; j--) DestroyImmediate(meshFilters[j].gameObject);
     }
 
-    private void SolveMaze(List<Vector2> maze)
+    public static List<Vector2> SolveMaze(ICollection<Vector2> maze, Vector2 start, Vector2 end)
     {
         // entryTile = new Vector2(1, 1);
         // endTile = new Vector2(width * 2 - 1, height * 2 - 1);
 
-        var start = new PathTile(entryTile);
-        var end = new PathTile(endTile);
+        PathTile startTile = new PathTile(start);
+        PathTile endTile = new PathTile(end);
 
-        solvedPath = new List<Vector2>();
-        var visitedCells = new List<Vector2>();
+        List<Vector2> solvedPath = new List<Vector2>();
+        List<Vector2> visitedCells = new List<Vector2>();
 
-        var queue = new Queue<PathTile>();
-        queue.Enqueue(start);
+        Queue<PathTile> queue = new Queue<PathTile>();
+        queue.Enqueue(startTile);
 
-        var finished = false;
+        bool finished = false;
 
         while (queue.Count > 0 && !finished)
         {
-            var current = queue.Dequeue();
+            PathTile current = queue.Dequeue();
 
-            if (!visitedCells.Contains(current.position))
+            if (!visitedCells.Contains(current.Position))
             {
-                var neighbors = new List<Vector2>();
+                List<Vector2> neighbors = new List<Vector2>
+                {
+                    new Vector2(current.Position.x + 1, current.Position.y),
+                    new Vector2(current.Position.x - 1, current.Position.y),
+                    new Vector2(current.Position.x, current.Position.y + 1),
+                    new Vector2(current.Position.x, current.Position.y - 1)
+                };
 
-                neighbors.Add(new Vector2(current.position.x + 1, current.position.y));
-                neighbors.Add(new Vector2(current.position.x - 1, current.position.y));
-                neighbors.Add(new Vector2(current.position.x, current.position.y + 1));
-                neighbors.Add(new Vector2(current.position.x, current.position.y - 1));
 
-                for (var i = 0; i < neighbors.Count; i++)
-                    if (maze.Contains(neighbors[i]) && !visitedCells.Contains(neighbors[i]))
+                foreach (Vector2 path in neighbors)
+                    if (maze.Contains(path) && !visitedCells.Contains(path))
                     {
-                        Debug.Log("Neighbor found");
-                        if (neighbors[i] == end.position)
+                        if (path == endTile.Position)
                         {
-                            end.parent = current;
+                            endTile.Parent = current;
                             finished = true;
                         }
                         else
                         {
-                            var tile = new PathTile(neighbors[i]);
-                            tile.parent = current;
+                            PathTile tile = new PathTile(path) {Parent = current};
                             queue.Enqueue(tile);
                         }
                     }
             }
-            visitedCells.Add(current.position);
+            visitedCells.Add(current.Position);
         }
 
-        var curTile = end;
+        PathTile curTile = endTile;
 
-        while (curTile.parent != null)
+        while (curTile.Parent != null)
         {
-            solvedPath.Add(curTile.position);
-            curTile = curTile.parent;
+            solvedPath.Add(curTile.Position);
+            curTile = curTile.Parent;
         }
 
-        solvedPath.Add(start.position);
+        solvedPath.Add(startTile.Position);
+        solvedPath.Reverse();
 
-        data.pathTiles = new List<Vector2>();
-        data.pathTiles.AddRange(solvedPath);
-        data.pathTiles.Reverse();
+        return solvedPath;
+
     }
 
-    private void DrawTiles(List<Vector2> tiles, string name)
+    private void DrawTiles(List<Vector2> tiles, string containerName)
     {
-        if (GameObject.Find(name) && clearTiles)
-            DestroyImmediate(GameObject.Find(name));
-        var parentContainer = new GameObject(name);
-        parentContainer.transform.parent = container.transform;
+        if (GameObject.Find(containerName) && _clearTiles)
+            DestroyImmediate(GameObject.Find(containerName));
+        GameObject parentContainer = new GameObject(containerName);
+        parentContainer.transform.parent = _container.transform;
 
-        foreach (var tile in tiles)
+        foreach (Vector2 tile in tiles)
         {
-            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
             wall.transform.position = new Vector3(tile.x * wall.transform.localScale.x, 1,
                 tile.y * wall.transform.localScale.z);
@@ -356,12 +357,12 @@ public class MazeCreator : EditorWindow
 
     private class PathTile
     {
-        public PathTile parent;
-        public Vector2 position;
+        public PathTile Parent;
+        public Vector2 Position;
 
         public PathTile(Vector2 pos)
         {
-            position = pos;
+            Position = pos;
         }
     }
 }
