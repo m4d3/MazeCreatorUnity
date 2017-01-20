@@ -232,9 +232,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bc8e392771de8b47b277cf9eee20f46, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementType: 0
-  speed: 5
-  zOffset: 0
+  MovementType: 0
+  Speed: 10
+  ZOffset: 0
+  RandomStart: 0
 --- !u!135 &135760629625786586
 SphereCollider:
   m_ObjectHideFlags: 1

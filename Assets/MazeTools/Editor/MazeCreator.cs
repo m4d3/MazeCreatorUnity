@@ -6,6 +6,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Assets.MazeTools.Scripts;
 using UnityEditor;
 using UnityEngine;
 
@@ -33,6 +34,9 @@ public class MazeCreator : EditorWindow
     private GameObject _wallPrefab;
     private List<Vector2> _walls;
     private int _width;
+    private List<Vector2> _pathBorder;
+    private bool _cutCorners;
+    private int _borderWidth;
 
     [MenuItem("Maze And Grid Tools/Show Maze Creator")]
     private static void Create()
@@ -112,6 +116,21 @@ public class MazeCreator : EditorWindow
 
         _clearTiles = EditorGUILayout.Toggle("Clear Existing", _clearTiles);
         _randomizeMaze = EditorGUILayout.Toggle("randomizeMaze", _randomizeMaze);
+
+        if (GUILayout.Button("Build Pathborder")) {
+            _pathBorder = new List<Vector2>();
+
+            _pathBorder = BuildBorder(_solvedPath, !_cutCorners);
+
+            for (var i = 0; i < _borderWidth - 1; i++) _pathBorder.AddRange(BuildBorder(_pathBorder, !_cutCorners));
+            foreach (var tile in _solvedPath) _pathBorder.Remove(tile);
+
+            DrawTiles(_pathBorder, "Path_Border");
+        }
+
+        _borderWidth = EditorGUILayout.IntField("Border Width:", _borderWidth);
+
+        _cutCorners = EditorGUILayout.Toggle("Cut Corners", _cutCorners);
     }
 
     private void CreateMaze()
@@ -336,6 +355,32 @@ public class MazeCreator : EditorWindow
 
         return solvedPath;
 
+    }
+
+    private List<Vector2> BuildBorder(List<Vector2> tiles, bool corners) {
+        List<Vector2> border = new List<Vector2>();
+
+        foreach (Vector2 pathTile in tiles) {
+            List<Vector2> neighbors = new List<Vector2>
+            {
+                    new Vector2(pathTile.x + 1, pathTile.y),
+                    new Vector2(pathTile.x - 1, pathTile.y),
+                    new Vector2(pathTile.x, pathTile.y + 1),
+                    new Vector2(pathTile.x, pathTile.y - 1)
+                };
+
+
+            if (corners) {
+                neighbors.Add(new Vector2(pathTile.x + 1, pathTile.y + 1));
+                neighbors.Add(new Vector2(pathTile.x + 1, pathTile.y - 1));
+                neighbors.Add(new Vector2(pathTile.x - 1, pathTile.y + 1));
+                neighbors.Add(new Vector2(pathTile.x - 1, pathTile.y - 1));
+            }
+
+            foreach (Vector2 tile in neighbors) if (!border.Contains(tile) && !tiles.Contains(tile)) border.Add(tile);
+        }
+
+        return border;
     }
 
     private void DrawTiles(List<Vector2> tiles, string containerName)
