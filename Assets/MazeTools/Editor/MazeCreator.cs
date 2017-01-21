@@ -37,7 +37,7 @@ public class MazeCreator : EditorWindow
     private List<Vector2> _walls;
     private int _width;
 
-    [MenuItem("Maze And Grid Tools/Show Maze Creator")]
+    [MenuItem("MazeCreator/Show Maze Creator")]
     private static void Create()
     {
         MazeCreator window = (MazeCreator) GetWindow(typeof(MazeCreator));
@@ -65,8 +65,6 @@ public class MazeCreator : EditorWindow
 
         EditorGUILayout.EndHorizontal();
 
-        _generateCollider = EditorGUILayout.Toggle("Generate Collider", _generateCollider);
-
         EditorGUILayout.Space();
 
         if (GUILayout.Button("Create Maze"))
@@ -78,6 +76,8 @@ public class MazeCreator : EditorWindow
             Debug.Log("Maze created in: " + _processTime + "seconds");
         }
 
+        EditorGUILayout.BeginHorizontal();
+
         if (GUILayout.Button("Combine Meshes"))
             if (_container != null && _container.transform.childCount > 0)
             {
@@ -88,6 +88,10 @@ public class MazeCreator : EditorWindow
                 if (_container.transform.FindChild("Maze_Path"))
                     CombineMeshes(_container.transform.FindChild("Maze_Path").gameObject);
             }
+
+        _generateCollider = EditorGUILayout.ToggleLeft("Generate Collider", _generateCollider);
+
+        EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Maze Solving");

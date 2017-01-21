@@ -128,6 +128,7 @@ MonoBehaviour:
   CutCorners: 0
   RandomSolve: 0
   MinPathLength: 0
+  TilePrefab: {fileID: 0}
 --- !u!4 &998448
 Transform:
   m_ObjectHideFlags: 0
@@ -178,6 +179,7 @@ MonoBehaviour:
   CutCorners: 0
   RandomSolve: 0
   MinPathLength: 0
+  TilePrefab: {fileID: 1278474854446778, guid: 3af25823bcd047f45914a6f45ac900f4, type: 2}
 --- !u!4 &393829500
 Transform:
   m_ObjectHideFlags: 0
@@ -228,6 +230,7 @@ MonoBehaviour:
   CutCorners: 0
   RandomSolve: 1
   MinPathLength: 40
+  TilePrefab: {fileID: 0}
 --- !u!4 &687700852
 Transform:
   m_ObjectHideFlags: 0
@@ -341,6 +344,7 @@ MonoBehaviour:
   CutCorners: 0
   RandomSolve: 0
   MinPathLength: 0
+  TilePrefab: {fileID: 0}
 --- !u!4 &1106901178
 Transform:
   m_ObjectHideFlags: 0
@@ -391,6 +395,7 @@ MonoBehaviour:
   CutCorners: 0
   RandomSolve: 1
   MinPathLength: 20
+  TilePrefab: {fileID: 0}
 --- !u!4 &1250083015
 Transform:
   m_ObjectHideFlags: 0
@@ -528,6 +533,7 @@ MonoBehaviour:
   CutCorners: 1
   RandomSolve: 0
   MinPathLength: 0
+  TilePrefab: {fileID: 0}
 --- !u!4 &1361892356
 Transform:
   m_ObjectHideFlags: 0
@@ -578,6 +584,7 @@ MonoBehaviour:
   CutCorners: 1
   RandomSolve: 1
   MinPathLength: 40
+  TilePrefab: {fileID: 1278474854446778, guid: 3af25823bcd047f45914a6f45ac900f4, type: 2}
 --- !u!4 &1870615044
 Transform:
   m_ObjectHideFlags: 0
@@ -628,6 +635,7 @@ MonoBehaviour:
   CutCorners: 0
   RandomSolve: 0
   MinPathLength: 0
+  TilePrefab: {fileID: 0}
 --- !u!4 &1992052292
 Transform:
   m_ObjectHideFlags: 0
