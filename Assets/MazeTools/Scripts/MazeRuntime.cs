@@ -1,4 +1,8 @@
-﻿using System.Collections;
+﻿/* Class for Maze creation at runtime */
+/* Author: Matthias Ewald - github.com/m4d3 */
+
+
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -38,7 +42,6 @@ public class MazeRuntime : MonoBehaviour
     // Use this for initialization
     void Start ()
     {
-        //_addFloor = true;
         _clearTiles = true;
         StartCoroutine("Create");
     }
@@ -53,6 +56,7 @@ public class MazeRuntime : MonoBehaviour
         while (true)
         {
             CreateMaze();
+            _solvedPath = new List<Vector2>();
 
             if (RandomSolve)
             {
@@ -61,6 +65,7 @@ public class MazeRuntime : MonoBehaviour
 
                 while (_solvedPath.Count < MinPathLength)
                 {
+                    _solvedPath.Clear();
                     _entryTile = _endTile = _floor[Random.Range(0, _floor.Count)];
                     while (_endTile == _entryTile) _endTile = _floor[Random.Range(0, _floor.Count)];
                     _solvedPath = SolveMaze(_floor, _entryTile, _endTile);
@@ -73,21 +78,24 @@ public class MazeRuntime : MonoBehaviour
 
             _data.PathTiles = new List<Vector2>();
             _data.PathTiles.AddRange(_solvedPath);
-            _data.PathTiles.Reverse();
 
-            DrawTiles(_solvedPath, "Maze_Path");
-
-            if (AddPath)
-                DrawTiles(_solvedPath, "Maze_Path");
-
-            if (AddBorder)
+            if (_solvedPath.Count > 0)
             {
-                _pathBorder = new List<Vector2>();
-                _pathBorder = BuildBorder(_solvedPath, !CutCorners);
-                for (int i = 0; i < BorderWidth - 1; i++) _pathBorder.AddRange(BuildBorder(_pathBorder, !CutCorners));
-                foreach (Vector2 tile in _solvedPath) _pathBorder.Remove(tile);
+                if(AddPath)
+                    DrawTiles(_solvedPath, "Maze_Path");
 
-                DrawTiles(_pathBorder, "Path_Border");
+                if (AddBorder) {
+                    _pathBorder = new List<Vector2>();
+                    _pathBorder = BuildBorder(_solvedPath, !CutCorners);
+                    for (int i = 0; i < BorderWidth - 1; i++) _pathBorder.AddRange(BuildBorder(_pathBorder, !CutCorners));
+                    foreach (Vector2 tile in _solvedPath) _pathBorder.Remove(tile);
+
+                    DrawTiles(_pathBorder, "Path_Border");
+                }
+            }
+            else
+            {
+                Debug.Log("No solved path found");
             }
 
             yield return new WaitForSeconds(1.0f);
@@ -133,31 +141,12 @@ public class MazeRuntime : MonoBehaviour
     private void DrawMaze()
     {
         if (AddWalls) {
-            GameObject wallsContainer = new GameObject("Maze_Walls");
-            wallsContainer.transform.parent = _container.transform;
-
-            foreach (Vector2 wallPos in _walls) {
-                GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                wall.transform.position = new Vector3(wallPos.x * wall.transform.localScale.x, 0,
-                wallPos.y * wall.transform.localScale.z);
-                wall.transform.parent = wallsContainer.transform;
-            }
+            DrawTiles(_walls, "Maze_Walls");
         }
 
         if (AddFloor) {
-            GameObject floorContainer = new GameObject("Maze_Floor");
-            floorContainer.transform.parent = _container.transform;
-
-            foreach (Vector2 floorPos in _floor) {
-                GameObject floorObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-
-                floorObj.transform.localScale = new Vector3(1, 0.1f, 1);
-                floorObj.transform.position = new Vector3(floorPos.x, -0.5f, floorPos.y);
-
-                floorObj.transform.parent = floorContainer.transform;
-            }
+           DrawTiles(_floor, "Maze_Floor", -1.0f);
         }
-
     }
 
 
@@ -303,19 +292,23 @@ public class MazeRuntime : MonoBehaviour
         return border;
     }
 
-    private void DrawTiles(List<Vector2> tiles, string containerName) {
-        if (GameObject.Find(containerName) && _clearTiles)
-            DestroyImmediate(GameObject.Find(containerName));
+    private void DrawTiles(List<Vector2> tiles, string containerName, float zOffset = 0) {
+
+        if (_container.transform.FindChild(containerName) && _clearTiles)
+            Destroy(_container.transform.FindChild(containerName).gameObject);
+
         GameObject parentContainer = new GameObject(containerName);
         parentContainer.transform.parent = _container.transform;
 
         foreach (Vector2 tile in tiles) {
             GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-            wall.transform.position = new Vector3(tile.x * wall.transform.localScale.x, 0,
+            wall.transform.position = new Vector3(tile.x * wall.transform.localScale.x, zOffset,
                 tile.y * wall.transform.localScale.z);
             wall.transform.parent = parentContainer.transform;
         }
+
+        parentContainer.transform.position = _container.transform.position;
     }
 
     private class PathTile {

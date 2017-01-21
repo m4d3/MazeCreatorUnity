@@ -45,15 +45,29 @@ public class MazeCreator : EditorWindow
 
     private void OnGUI()
     {
+        EditorGUILayout.LabelField("Maze Parameters");
+
+        EditorGUILayout.BeginHorizontal();
+
         _width = EditorGUILayout.IntField("Maze Width:", _width);
         _height = EditorGUILayout.IntField("Maze Height:", _height);
+
+        EditorGUILayout.EndHorizontal();
+
         _container = EditorGUILayout.ObjectField("Container", _container, typeof(Object), true) as GameObject;
         _wallPrefab = EditorGUILayout.ObjectField("Wall", _wallPrefab, typeof(Object), true) as GameObject;
         _floorPrefab = EditorGUILayout.ObjectField("Floor", _floorPrefab, typeof(Object), true) as GameObject;
+
+        EditorGUILayout.BeginHorizontal();
+
         _addFloor = EditorGUILayout.Toggle("Add Floor", _addFloor);
         _addWalls = EditorGUILayout.Toggle("Add Walls", _addWalls);
+
+        EditorGUILayout.EndHorizontal();
+
         _generateCollider = EditorGUILayout.Toggle("Generate Collider", _generateCollider);
 
+        EditorGUILayout.Space();
 
         if (GUILayout.Button("Create Maze"))
         {
@@ -75,8 +89,17 @@ public class MazeCreator : EditorWindow
                     CombineMeshes(_container.transform.FindChild("Maze_Path").gameObject);
             }
 
-        if (GUILayout.Button("Solve Maze"))
-        {
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Maze Solving");
+        EditorGUILayout.BeginHorizontal();
+
+        if (GUILayout.Button("Set Selected As Start"))
+            _entryTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
+
+        if (GUILayout.Button("Set Selected As End"))
+            _endTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
+
+        if (GUILayout.Button("Solve Maze")) {
             _solvedPath = SolveMaze(_floor, _entryTile, _endTile);
 
             _data.PathTiles = _solvedPath;
@@ -84,11 +107,9 @@ public class MazeCreator : EditorWindow
             DrawTiles(_solvedPath, "Maze_Path");
         }
 
-        if (GUILayout.Button("Set Selected As Start"))
-            _entryTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
+        EditorGUILayout.EndHorizontal();
 
-        if (GUILayout.Button("Set Selected As End"))
-            _endTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
+        EditorGUILayout.BeginHorizontal();
 
         if (GUILayout.Button("RandomSolve"))
         {
@@ -113,11 +134,25 @@ public class MazeCreator : EditorWindow
 
         _minPathLength = EditorGUILayout.IntField("Minimum path length:", _minPathLength);
 
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
+
         _clearTiles = EditorGUILayout.Toggle("Clear Existing", _clearTiles);
         _randomizeMaze = EditorGUILayout.Toggle("randomizeMaze", _randomizeMaze);
 
-        if (GUILayout.Button("Build Pathborder"))
-        {
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Maze Path Border");
+        EditorGUILayout.BeginHorizontal();
+
+        _borderWidth = EditorGUILayout.IntField("Border Width:", _borderWidth);
+        _cutCorners = EditorGUILayout.Toggle("Cut Corners", _cutCorners);
+
+        EditorGUILayout.EndHorizontal();
+
+        if (GUILayout.Button("Build Pathborder")) {
             _pathBorder = new List<Vector2>();
 
             _pathBorder = BuildBorder(_solvedPath, !_cutCorners);
@@ -127,10 +162,6 @@ public class MazeCreator : EditorWindow
 
             DrawTiles(_pathBorder, "Path_Border");
         }
-
-        _borderWidth = EditorGUILayout.IntField("Border Width:", _borderWidth);
-
-        _cutCorners = EditorGUILayout.Toggle("Cut Corners", _cutCorners);
     }
 
     private void CreateMaze()
