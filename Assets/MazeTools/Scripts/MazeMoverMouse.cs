@@ -28,35 +28,43 @@ namespace Assets.MazeTools.Scripts
         private bool _solved;
 
         private MazeData _data;
-        private MazeSelector _selector;
 
         // Use this for initialization
         void Start()
         {
             _moveTarget = _currentPosition = new Vector2((int) transform.position.x, (int) transform.position.z);
-            _selector = GameObject.FindObjectOfType<MazeSelector>();
         }
 
         // Update is called once per frame
         void Update()
         {
-    
-            if (_selector && Input.GetMouseButtonDown(0) && _selector.SelectedTile != null)
-                {
-                    GetData();
-                    SolveMaze(_tiles, new Vector2((int)_selector.SelectedTile.transform.position.x, (int) _selector.SelectedTile.transform.position.z));
-                    _solvedTileIndex = 0;
-                }
-     
-            if (_currentPosition != _moveTarget)
-            {
+            if (_currentPosition != _moveTarget) {
                 _currentPosition = Vector2.MoveTowards(_currentPosition, _moveTarget, Time.deltaTime * Speed);
                 transform.position = new Vector3(_currentPosition.x, transform.position.y, _currentPosition.y);
             }
-            else if(_solved)
+            else if (_solved)
             {
                 GetNextMoveTarget();
             }
+        }
+
+        public void MoveToTarget()
+        {
+            _solved = false;
+            GetData();
+
+            RaycastHit hitInfo;
+            bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo);
+
+            if (!hit) return;
+            Vector2 newTarget = new Vector2((int) hitInfo.transform.position.x, (int) hitInfo.transform.position.z);
+            if (!_tiles.Contains(newTarget)) return;
+
+            SolveMaze(_tiles, newTarget);
+            _solvedTileIndex = 0;
+            GetNextMoveTarget();
+
+            _solved = true;
         }
 
         private void GetData()
@@ -97,7 +105,7 @@ namespace Assets.MazeTools.Scripts
 
             if (maze == null) return;
 
-            PathTile start = new PathTile(_currentPosition);
+            PathTile start = new PathTile(new Vector2((int)_currentPosition.x, (int)_currentPosition.y));
             PathTile end = new PathTile(target);
 
             _solvedPath = new List<Vector2>();
@@ -112,32 +120,30 @@ namespace Assets.MazeTools.Scripts
             {
                 PathTile current = queue.Dequeue();
 
-                if (!visitedCells.Contains(current.Position))
+                if (visitedCells.Contains(current.Position)) continue;
+                List<Vector2> neighbors = new List<Vector2>
                 {
-                    List<Vector2> neighbors = new List<Vector2>
+                    new Vector2(current.Position.x + 1, current.Position.y),
+                    new Vector2(current.Position.x - 1, current.Position.y),
+                    new Vector2(current.Position.x, current.Position.y + 1),
+                    new Vector2(current.Position.x, current.Position.y - 1)
+                };
+
+
+                foreach (Vector2 path in neighbors)
+                    if (maze.Contains(path) && !visitedCells.Contains(path))
                     {
-                        new Vector2(current.Position.x + 1, current.Position.y),
-                        new Vector2(current.Position.x - 1, current.Position.y),
-                        new Vector2(current.Position.x, current.Position.y + 1),
-                        new Vector2(current.Position.x, current.Position.y - 1)
-                    };
-
-
-                    foreach (Vector2 path in neighbors)
-                        if (maze.Contains(path) && !visitedCells.Contains(path))
+                        if (path == end.Position)
                         {
-                            if (path == end.Position)
-                            {
-                                end.Parent = current;
-                                finished = true;
-                            }
-                            else
-                            {
-                                PathTile tile = new PathTile(path) {Parent = current};
-                                queue.Enqueue(tile);
-                            }
+                            end.Parent = current;
+                            finished = true;
                         }
-                }
+                        else
+                        {
+                            PathTile tile = new PathTile(path) {Parent = current};
+                            queue.Enqueue(tile);
+                        }
+                    }
                 visitedCells.Add(current.Position);
             }
 
@@ -151,9 +157,6 @@ namespace Assets.MazeTools.Scripts
 
             _solvedPath.Add(start.Position);
             _solvedPath.Reverse();
-
-            _solved = true;
-
         }
 
         private class PathTile {
