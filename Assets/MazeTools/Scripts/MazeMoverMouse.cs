@@ -43,9 +43,9 @@ namespace Assets.MazeTools.Scripts
     
             if (_selector && Input.GetMouseButtonDown(0) && _selector.SelectedTile != null)
                 {
+                    GetData();
                     SolveMaze(_tiles, new Vector2((int)_selector.SelectedTile.transform.position.x, (int) _selector.SelectedTile.transform.position.z));
                     _solvedTileIndex = 0;
-                    _solved = true;
                 }
      
             if (_currentPosition != _moveTarget)
@@ -56,6 +56,30 @@ namespace Assets.MazeTools.Scripts
             else if(_solved)
             {
                 GetNextMoveTarget();
+            }
+        }
+
+        private void GetData()
+        {
+            if (_data) return;
+
+            _data = GameObject.Find("Maze").GetComponent<MazeData>();
+
+            switch (MoveableTiles) {
+                case MovableTilesTypes.Border:
+                    _tiles = _data.BorderTiles;
+                    break;
+                case MovableTilesTypes.Floor:
+                    _tiles = _data.FloorTiles;
+                    break;
+                case MovableTilesTypes.Walls:
+                    _tiles = _data.WallTiles;
+                    break;
+                case MovableTilesTypes.Path:
+                    _tiles = _data.PathTiles;
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -70,30 +94,8 @@ namespace Assets.MazeTools.Scripts
         }
 
         private void SolveMaze(ICollection<Vector2> maze, Vector2 target) {
-            // entryTile = new Vector2(1, 1);
-            // endTile = new Vector2(width * 2 - 1, height * 2 - 1);
 
-            if (!_data)
-            {
-                _data = GameObject.Find("Maze").GetComponent<MazeData>();
-
-                switch (MoveableTiles) {
-                    case MovableTilesTypes.Border:
-                        _tiles = _data.BorderTiles;
-                        break;
-                    case MovableTilesTypes.Floor:
-                        _tiles = _data.FloorTiles;
-                        break;
-                    case MovableTilesTypes.Walls:
-                        _tiles = _data.WallTiles;
-                        break;
-                    case MovableTilesTypes.Path:
-                        _tiles = _data.PathTiles;
-                        break;
-                    default:
-                        break;
-                }
-            }
+            if (maze == null) return;
 
             PathTile start = new PathTile(_currentPosition);
             PathTile end = new PathTile(target);
@@ -106,10 +108,12 @@ namespace Assets.MazeTools.Scripts
 
             bool finished = false;
 
-            while (queue.Count > 0 && !finished) {
+            while (queue.Count > 0 && !finished)
+            {
                 PathTile current = queue.Dequeue();
 
-                if (!visitedCells.Contains(current.Position)) {
+                if (!visitedCells.Contains(current.Position))
+                {
                     List<Vector2> neighbors = new List<Vector2>
                     {
                         new Vector2(current.Position.x + 1, current.Position.y),
@@ -120,12 +124,16 @@ namespace Assets.MazeTools.Scripts
 
 
                     foreach (Vector2 path in neighbors)
-                        if (maze.Contains(path) && !visitedCells.Contains(path)) {
-                            if (path == end.Position) {
+                        if (maze.Contains(path) && !visitedCells.Contains(path))
+                        {
+                            if (path == end.Position)
+                            {
                                 end.Parent = current;
                                 finished = true;
-                            } else {
-                                PathTile tile = new PathTile(path) { Parent = current };
+                            }
+                            else
+                            {
+                                PathTile tile = new PathTile(path) {Parent = current};
                                 queue.Enqueue(tile);
                             }
                         }
@@ -135,13 +143,17 @@ namespace Assets.MazeTools.Scripts
 
             PathTile curTile = end;
 
-            while (curTile.Parent != null) {
+            while (curTile.Parent != null)
+            {
                 _solvedPath.Add(curTile.Position);
                 curTile = curTile.Parent;
             }
 
             _solvedPath.Add(start.Position);
             _solvedPath.Reverse();
+
+            _solved = true;
+
         }
 
         private class PathTile {
