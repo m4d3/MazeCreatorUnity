@@ -1,20 +1,23 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class MazeData : MonoBehaviour {
+namespace Assets.MazeTools.Scripts
+{
+    public class MazeData : MonoBehaviour {
 
-    public List<Vector2> FloorTiles;
-    public List<Vector2> WallTiles;
-    public List<Vector2> PathTiles;
+        public List<Vector2> FloorTiles;
+        public List<Vector2> WallTiles;
+        public List<Vector2> PathTiles;
+        public List<Vector2> BorderTiles;
 
-	// Use this for initialization
-	void Start () {
+        // Use this for initialization
+        void Start () {
 		
-	}
+        }
 	
-	// Update is called once per frame
-	void Update () {
+        // Update is called once per frame
+        void Update () {
 		
-	}
+        }
+    }
 }

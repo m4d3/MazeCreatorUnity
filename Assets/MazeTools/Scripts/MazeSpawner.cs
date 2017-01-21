@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-namespace Assets.MazeTools
+namespace Assets.MazeTools.Scripts
 {
     public class MazeSpawner : MonoBehaviour
     {

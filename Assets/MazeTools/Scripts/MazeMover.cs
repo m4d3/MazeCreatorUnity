@@ -9,8 +9,8 @@ namespace Assets.MazeTools.Scripts
     {
         public enum MovementTypes
         {
-            random,
-            solved
+            Random,
+            Solved
         }
 
         private List<Vector2> _floorTiles;
@@ -27,6 +27,9 @@ namespace Assets.MazeTools.Scripts
         public float ZOffset = 0;
         public bool RandomStart;
 
+        public delegate void OnEndReached();
+        public OnEndReached ReachedEndCallback;
+
         // Use this for initialization
         private void Start()
         {
@@ -36,7 +39,7 @@ namespace Assets.MazeTools.Scripts
             _solvedPath = GameObject.Find("Maze").GetComponent<MazeData>().PathTiles;
 
             switch (MovementType) {
-                case MovementTypes.random:
+                case MovementTypes.Random:
                     if (RandomStart)
                         _target = _moveTarget = _floorTiles[Random.Range(0, _floorTiles.Count)];
                     else
@@ -44,7 +47,7 @@ namespace Assets.MazeTools.Scripts
                         _target =_moveTarget = new Vector2((int)transform.position.x, (int)transform.position.z);
                     }
                     break;
-                case MovementTypes.solved:
+                case MovementTypes.Solved:
                     _target = _moveTarget = _solvedPath[0];
                     break;
                 default:
@@ -76,37 +79,30 @@ namespace Assets.MazeTools.Scripts
         {
             switch (MovementType)
             {
-                case MovementTypes.random:
+                case MovementTypes.Random:
                     List<Vector2> neighbors = SearchNeighbors(_target);
                     if (neighbors.Count == 0)
                     {
                         _visitedTiles.Clear();
                         _visitedTiles.Add(_target);
-                        Debug.Log("Clearing visited tiles");
                         neighbors = SearchNeighbors(_target);
                     }
-
                     _moveTarget = neighbors[Random.Range(0, neighbors.Count)];
                     break;
-                case MovementTypes.solved:
+                case MovementTypes.Solved:
                     if (_solvedTileIndex < _solvedPath.Count - 1)
                     {
                         _solvedTileIndex++;
                         _moveTarget = _solvedPath[_solvedTileIndex];
                     }
-                    else
+                    else if(ReachedEndCallback != null)
                     {
-                        OnEndReached();
+                        ReachedEndCallback();
                     }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-        }
-
-        private void OnEndReached()
-        {
-            Destroy(transform.gameObject);
         }
 
         private List<Vector2> SearchNeighbors(Vector2 cell)

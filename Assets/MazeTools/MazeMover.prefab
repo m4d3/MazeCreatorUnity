@@ -232,7 +232,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bc8e392771de8b47b277cf9eee20f46, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MovementType: 0
+  MovementType: 1
   Speed: 10
   ZOffset: 0
   RandomStart: 0

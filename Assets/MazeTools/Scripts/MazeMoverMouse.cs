@@ -7,82 +7,93 @@ namespace Assets.MazeTools.Scripts
     {
         public float Speed;
 
+        public enum MovableTilesTypes
+        {
+            Floor,
+            Walls,
+            Border,
+            Path
+        }
+
+        public MovableTilesTypes MoveableTiles;
+
         private GameObject tile;
 
         private Vector2 _currentPosition;
         private Vector2 _moveTarget;
 
         private List<Vector2> _solvedPath;
-        private List<Vector2> _floorTiles;
+        private List<Vector2> _tiles;
         private int _solvedTileIndex;
-        private bool solved;
+        private bool _solved;
+
+        private MazeData _data;
+        private MazeSelector _selector;
 
         // Use this for initialization
         void Start()
         {
             _moveTarget = _currentPosition = new Vector2((int) transform.position.x, (int) transform.position.z);
-            _floorTiles = GameObject.Find("Maze").GetComponent<MazeData>().FloorTiles;
-
+            _selector = GameObject.FindObjectOfType<MazeSelector>();
         }
 
         // Update is called once per frame
         void Update()
         {
-            if (tile) {
-                tile.GetComponent<Renderer>().material.SetColor("_Color", Color.white);
-            }
-
-            RaycastHit hitInfo = new RaycastHit();
-            bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo);
-            if (hit)
-            {
-                if (hitInfo.transform.parent && hitInfo.transform.parent.name.Equals("Maze_Floor"))
+    
+            if (_selector && Input.GetMouseButtonDown(0) && _selector.SelectedTile != null)
                 {
-                    if (tile)
-                    {
-                        tile.GetComponent<Renderer>().material.SetColor("_Color", Color.white);
-                    }
-                    tile = hitInfo.transform.gameObject;
-                    tile.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
-
-                    if (Input.GetMouseButtonDown(0))
-                    {
-                        SolveMaze(_floorTiles, new Vector2((int) tile.transform.position.x, (int) tile.transform.position.z));
-                        _solvedTileIndex = 0;
-                        solved = true;
-                    }
+                    SolveMaze(_tiles, new Vector2((int)_selector.SelectedTile.transform.position.x, (int) _selector.SelectedTile.transform.position.z));
+                    _solvedTileIndex = 0;
+                    _solved = true;
                 }
-            }
+     
             if (_currentPosition != _moveTarget)
             {
                 _currentPosition = Vector2.MoveTowards(_currentPosition, _moveTarget, Time.deltaTime * Speed);
                 transform.position = new Vector3(_currentPosition.x, transform.position.y, _currentPosition.y);
             }
-            else if(solved)
+            else if(_solved)
             {
                 GetNextMoveTarget();
             }
-        }
-
-        private void OnDrawGizmos()
-        {
-        
         }
 
         private void GetNextMoveTarget()
         {
             _currentPosition = _moveTarget;
 
-            if (_solvedTileIndex < _solvedPath.Count - 1)
-            {
-                _solvedTileIndex++;
-                _moveTarget = _solvedPath[_solvedTileIndex];
-            }
+            if (_solvedTileIndex >= _solvedPath.Count - 1) return;
+
+            _solvedTileIndex++;
+            _moveTarget = _solvedPath[_solvedTileIndex];
         }
 
         private void SolveMaze(ICollection<Vector2> maze, Vector2 target) {
             // entryTile = new Vector2(1, 1);
             // endTile = new Vector2(width * 2 - 1, height * 2 - 1);
+
+            if (!_data)
+            {
+                _data = GameObject.Find("Maze").GetComponent<MazeData>();
+
+                switch (MoveableTiles) {
+                    case MovableTilesTypes.Border:
+                        _tiles = _data.BorderTiles;
+                        break;
+                    case MovableTilesTypes.Floor:
+                        _tiles = _data.FloorTiles;
+                        break;
+                    case MovableTilesTypes.Walls:
+                        _tiles = _data.WallTiles;
+                        break;
+                    case MovableTilesTypes.Path:
+                        _tiles = _data.PathTiles;
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             PathTile start = new PathTile(_currentPosition);
             PathTile end = new PathTile(target);
