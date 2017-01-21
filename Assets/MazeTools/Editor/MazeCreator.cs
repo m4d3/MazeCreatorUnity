@@ -6,7 +6,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Assets.MazeTools.Scripts;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,9 +13,11 @@ public class MazeCreator : EditorWindow
 {
     private bool _addFloor;
     private bool _addWalls;
+    private int _borderWidth;
     private List<Vector2> _cells;
     private bool _clearTiles;
     private GameObject _container;
+    private bool _cutCorners;
 
     private MazeData _data;
     private Vector2 _endTile;
@@ -26,6 +27,7 @@ public class MazeCreator : EditorWindow
     private bool _generateCollider;
     private int _height;
     private int _minPathLength;
+    private List<Vector2> _pathBorder;
     private float _processTime;
     private bool _randomizeMaze;
     private List<Vector2> _solvedPath;
@@ -34,9 +36,6 @@ public class MazeCreator : EditorWindow
     private GameObject _wallPrefab;
     private List<Vector2> _walls;
     private int _width;
-    private List<Vector2> _pathBorder;
-    private bool _cutCorners;
-    private int _borderWidth;
 
     [MenuItem("Maze And Grid Tools/Show Maze Creator")]
     private static void Create()
@@ -117,13 +116,14 @@ public class MazeCreator : EditorWindow
         _clearTiles = EditorGUILayout.Toggle("Clear Existing", _clearTiles);
         _randomizeMaze = EditorGUILayout.Toggle("randomizeMaze", _randomizeMaze);
 
-        if (GUILayout.Button("Build Pathborder")) {
+        if (GUILayout.Button("Build Pathborder"))
+        {
             _pathBorder = new List<Vector2>();
 
             _pathBorder = BuildBorder(_solvedPath, !_cutCorners);
 
-            for (var i = 0; i < _borderWidth - 1; i++) _pathBorder.AddRange(BuildBorder(_pathBorder, !_cutCorners));
-            foreach (var tile in _solvedPath) _pathBorder.Remove(tile);
+            for (int i = 0; i < _borderWidth - 1; i++) _pathBorder.AddRange(BuildBorder(_pathBorder, !_cutCorners));
+            foreach (Vector2 tile in _solvedPath) _pathBorder.Remove(tile);
 
             DrawTiles(_pathBorder, "Path_Border");
         }
@@ -174,7 +174,9 @@ public class MazeCreator : EditorWindow
 
                 foreach (Vector2 wallPos in _walls)
                 {
-                    GameObject wall = _wallPrefab != null ? Instantiate(_wallPrefab, Vector3.zero, Quaternion.identity) : GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    GameObject wall = _wallPrefab != null
+                        ? Instantiate(_wallPrefab, Vector3.zero, Quaternion.identity)
+                        : GameObject.CreatePrimitive(PrimitiveType.Cube);
                     wall.transform.position = new Vector3(wallPos.x * wall.transform.localScale.x, 0,
                         wallPos.y * wall.transform.localScale.z);
                     wall.transform.parent = wallsContainer.transform;
@@ -326,7 +328,6 @@ public class MazeCreator : EditorWindow
 
                 foreach (Vector2 path in neighbors)
                     if (maze.Contains(path) && !visitedCells.Contains(path))
-                    {
                         if (path == endTile.Position)
                         {
                             endTile.Parent = current;
@@ -337,7 +338,6 @@ public class MazeCreator : EditorWindow
                             PathTile tile = new PathTile(path) {Parent = current};
                             queue.Enqueue(tile);
                         }
-                    }
             }
             visitedCells.Add(current.Position);
         }
@@ -354,23 +354,25 @@ public class MazeCreator : EditorWindow
         solvedPath.Reverse();
 
         return solvedPath;
-
     }
 
-    private List<Vector2> BuildBorder(List<Vector2> tiles, bool corners) {
+    private List<Vector2> BuildBorder(List<Vector2> tiles, bool corners)
+    {
         List<Vector2> border = new List<Vector2>();
 
-        foreach (Vector2 pathTile in tiles) {
+        foreach (Vector2 pathTile in tiles)
+        {
             List<Vector2> neighbors = new List<Vector2>
             {
-                    new Vector2(pathTile.x + 1, pathTile.y),
-                    new Vector2(pathTile.x - 1, pathTile.y),
-                    new Vector2(pathTile.x, pathTile.y + 1),
-                    new Vector2(pathTile.x, pathTile.y - 1)
-                };
+                new Vector2(pathTile.x + 1, pathTile.y),
+                new Vector2(pathTile.x - 1, pathTile.y),
+                new Vector2(pathTile.x, pathTile.y + 1),
+                new Vector2(pathTile.x, pathTile.y - 1)
+            };
 
 
-            if (corners) {
+            if (corners)
+            {
                 neighbors.Add(new Vector2(pathTile.x + 1, pathTile.y + 1));
                 neighbors.Add(new Vector2(pathTile.x + 1, pathTile.y - 1));
                 neighbors.Add(new Vector2(pathTile.x - 1, pathTile.y + 1));
