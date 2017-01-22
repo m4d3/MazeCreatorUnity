@@ -9984,6 +9984,7 @@ MonoBehaviour:
   - {x: 17, y: 19}
   - {x: 18, y: 19}
   - {x: 19, y: 19}
+  BorderTiles: []
 --- !u!4 &867237268
 Transform:
   m_ObjectHideFlags: 0
@@ -14580,6 +14581,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Speed: 10
+  MoveableTiles: 0
+  SetTargetOnMouseDown: 1
 --- !u!23 &1249167488
 MeshRenderer:
   m_ObjectHideFlags: 0

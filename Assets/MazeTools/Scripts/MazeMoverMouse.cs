@@ -16,8 +16,7 @@ namespace Assets.MazeTools.Scripts
         }
 
         public MovableTilesTypes MoveableTiles;
-
-        private GameObject tile;
+        public bool SetTargetOnMouseDown;
 
         private Vector2 _currentPosition;
         private Vector2 _moveTarget;
@@ -29,22 +28,21 @@ namespace Assets.MazeTools.Scripts
 
         private MazeData _data;
 
-        // Use this for initialization
-        void Start()
-        {
-            _moveTarget = _currentPosition = new Vector2((int) transform.position.x, (int) transform.position.z);
+        private void Start() {
+            _moveTarget = _currentPosition = new Vector2((int)transform.position.x, (int)transform.position.z);
         }
 
-        // Update is called once per frame
-        void Update()
-        {
+        private void Update() {
             if (_currentPosition != _moveTarget) {
                 _currentPosition = Vector2.MoveTowards(_currentPosition, _moveTarget, Time.deltaTime * Speed);
                 transform.position = new Vector3(_currentPosition.x, transform.position.y, _currentPosition.y);
-            }
-            else if (_solved)
-            {
+            } else if (_solved) {
                 GetNextMoveTarget();
+            }
+
+            if (Input.GetMouseButtonDown(0) && SetTargetOnMouseDown)
+            {
+                MoveToTarget();
             }
         }
 

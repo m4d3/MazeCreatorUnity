@@ -2,8 +2,8 @@
 
 namespace Assets.MazeTools.Scripts
 {
-    public class MazeTile : MonoBehaviour {
-
+    public class MazeTile : MonoBehaviour
+    {
         public enum MazeTileTypes
         {
             Wall,
@@ -13,37 +13,39 @@ namespace Assets.MazeTools.Scripts
             Path
         }
 
-        public MazeTileTypes Type;
+        private Vector2 _coordinates;
 
         public bool DrawCube;
+        public bool IsSelectable;
+        public bool IsHighlightable;
 
-        private Vector2 _coordinates;
+        public MazeTileTypes Type;
 
         public MazeTile(Vector2 pos)
         {
             _coordinates = pos;
         }
 
-        // Use this for initialization
-        void Start () {
-            GameObject go =transform.gameObject;
-
+        private void Awake()
+        {
             if (DrawCube)
             {
                 GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 Mesh mesh = cube.GetComponent<MeshFilter>().sharedMesh;
                 Material mat = cube.GetComponent<MeshRenderer>().sharedMaterial;
-                GameObject.Destroy(cube);
+                Destroy(cube);
 
-                go.AddComponent<MeshFilter>().sharedMesh = mesh;
-                go.AddComponent<MeshRenderer>().sharedMaterial = mat;
-                go.AddComponent<BoxCollider>();
+                gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+                gameObject.AddComponent<MeshRenderer>().sharedMaterial = mat;
+                gameObject.AddComponent<BoxCollider>();
             }
-        }
-	
-        // Update is called once per frame
-        void Update () {
-		
+
+            if (IsSelectable)
+            {
+                SelectionComponent sc = gameObject.AddComponent<SelectionComponent>();
+                sc.HighlightOnly = IsHighlightable;
+                sc.Type = GetType();
+            }
         }
     }
 }
