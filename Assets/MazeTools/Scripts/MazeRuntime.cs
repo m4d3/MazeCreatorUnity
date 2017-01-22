@@ -21,8 +21,6 @@ namespace Assets.MazeTools.Scripts
         private List<Vector2> _floor;
         private bool _generateCollider;
         private List<Vector2> _pathBorder;
-        private float _processTime;
-        private bool _randomizeMaze;
         private List<Vector2> _solvedPath;
 
         private List<Vector2> _unvisitedCells;
@@ -32,34 +30,32 @@ namespace Assets.MazeTools.Scripts
         public bool AddFloor;
         public bool AddPath;
         public bool AddWalls;
-
-        public int Height = 10;
-        public int Width = 10;
-   
-        public int MinPathLength;
-        public bool RandomSolve;
         public int BorderWidth;
         public bool CutCorners;
+
+        public int Height = 10;
+
+        public int MinPathLength;
+        public bool RandomSolve;
 
         public bool StopCreation;
 
         public GameObject TilePrefab;
+        public int Width = 10;
 
-        public delegate void OnCreationFinished();
-        public OnCreationFinished CreationFinishedCallback;
+        private void Awake()
+        {
+            _container = transform.gameObject;
+            _data = _container.AddComponent<MazeData>();
+        }
 
-        // Use this for initialization
         private void Start()
         {
             _clearTiles = true;
-            //StartCoroutine("CreateLoop");
-            Create();
-        }
-
-        // Update is called once per frame
-        private void Update()
-        {
-
+            if (!StopCreation)
+                StartCoroutine("CreateLoop");
+            else
+                Create();
         }
 
         private void Create()
@@ -67,28 +63,33 @@ namespace Assets.MazeTools.Scripts
             CreateMaze();
             _solvedPath = new List<Vector2>();
 
-            if (RandomSolve) {
-                if (_randomizeMaze)
-                    CreateMaze();
-
-                while (_solvedPath.Count < MinPathLength) {
+            if (RandomSolve)
+                while (_solvedPath.Count < MinPathLength)
+                {
                     _solvedPath.Clear();
                     _entryTile = _endTile = _floor[Random.Range(0, _floor.Count)];
                     while (_endTile == _entryTile) _endTile = _floor[Random.Range(0, _floor.Count)];
                     _solvedPath = SolveMaze(_floor, _entryTile, _endTile);
                 }
-            } else {
+            else if (MinPathLength > 0)
+                while (_solvedPath.Count < MinPathLength)
+                {
+                    CreateMaze();
+                    _solvedPath = SolveMaze(_floor, new Vector2(1, 1), new Vector2(Width * 2 - 1, Height * 2 - 1));
+                }
+            else
                 _solvedPath = SolveMaze(_floor, new Vector2(1, 1), new Vector2(Width * 2 - 1, Height * 2 - 1));
-            }
 
             _data.PathTiles = new List<Vector2>();
             _data.PathTiles.AddRange(_solvedPath);
 
-            if (_solvedPath.Count > 0) {
+            if (_solvedPath.Count > 0)
+            {
                 if (AddPath)
                     DrawTiles(_solvedPath, "Maze_Path");
 
-                if (AddBorder) {
+                if (AddBorder)
+                {
                     _pathBorder = new List<Vector2>();
                     _pathBorder = BuildBorder(_solvedPath, !CutCorners);
                     for (int i = 0; i < BorderWidth - 1; i++)
@@ -100,7 +101,9 @@ namespace Assets.MazeTools.Scripts
                     _data.BorderTiles = new List<Vector2>();
                     _data.BorderTiles.AddRange(_pathBorder);
                 }
-            } else {
+            }
+            else
+            {
                 Debug.Log("No solved path found");
             }
         }
@@ -119,12 +122,7 @@ namespace Assets.MazeTools.Scripts
         {
             if (Width <= 0 || Height <= 0) return;
 
-            if (_container == null) _container = transform.gameObject;
-            else foreach (Transform child in _container.transform) DestroyImmediate(child.gameObject);
-
-            _data = !_container.GetComponent<MazeData>()
-                ? _container.AddComponent<MazeData>()
-                : _container.GetComponent<MazeData>();
+            foreach (Transform child in _container.transform) DestroyImmediate(child.gameObject);
 
             _unvisitedCells = new List<Vector2>();
             _walls = new List<Vector2>();
@@ -222,10 +220,6 @@ namespace Assets.MazeTools.Scripts
                 if (genCollider != null) genCollider.sharedMesh = objContainer.GetComponent<MeshFilter>().sharedMesh;
             }
 
-            //if (material != null) {
-            //    renderer.material = material;
-            //}        
-
             objContainer.GetComponent<Renderer>().material = new Material(Shader.Find("Diffuse"));
             objContainer.gameObject.SetActive(true);
 
@@ -316,7 +310,8 @@ namespace Assets.MazeTools.Scripts
                     neighbors.Add(new Vector2(pathTile.x - 1, pathTile.y - 1));
                 }
 
-                foreach (Vector2 tile in neighbors) if (!border.Contains(tile) && !tiles.Contains(tile)) border.Add(tile);
+                foreach (Vector2 tile in neighbors)
+                    if (!border.Contains(tile) && !tiles.Contains(tile)) border.Add(tile);
             }
 
             return border;
@@ -353,8 +348,6 @@ namespace Assets.MazeTools.Scripts
                             break;
                         case "Path_Border":
                             currentTile.Type = MazeTile.MazeTileTypes.Border;
-                            break;
-                        default:
                             break;
                     }
                 }

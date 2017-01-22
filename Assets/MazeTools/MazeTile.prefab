@@ -52,6 +52,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DrawCube: 1
-  IsSelectable: 1
-  IsHighlightable: 1
+  SelectionType: 0
   Type: 0

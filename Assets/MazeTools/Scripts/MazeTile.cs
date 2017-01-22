@@ -16,8 +16,7 @@ namespace Assets.MazeTools.Scripts
         private Vector2 _coordinates;
 
         public bool DrawCube;
-        public bool IsSelectable;
-        public bool IsHighlightable;
+        public SelectionComponent.SelectionTypes SelectionType;
 
         public MazeTileTypes Type;
 
@@ -40,10 +39,10 @@ namespace Assets.MazeTools.Scripts
                 gameObject.AddComponent<BoxCollider>();
             }
 
-            if (IsSelectable)
+            if (SelectionType != SelectionComponent.SelectionTypes.None && SelectionManager.Instance != null)
             {
                 SelectionComponent sc = gameObject.AddComponent<SelectionComponent>();
-                sc.HighlightOnly = IsHighlightable;
+                sc.SelectionType = SelectionType;
                 sc.Type = GetType();
             }
         }

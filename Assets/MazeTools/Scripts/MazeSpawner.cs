@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Assets.MazeTools.Scripts
@@ -9,30 +10,18 @@ namespace Assets.MazeTools.Scripts
         private float _spawnDelay;
         public int CurrentWave = -1;
 
-        [System.Serializable]
-        public struct WaveInfo
-        {
-            public int SpawnCount;
-            public float SpawnDelay;
-            public float WaveDelay;
-            public GameObject SpawnObject;
-        }
-
         public WaveInfo[] Data;
 
-
-        // Use this for initialization
         private void Start()
         {
             StartCoroutine("StartWave");
         }
- 
+
 
         private IEnumerator Spawn()
         {
             while (_spawnCount > 0)
             {
-                Debug.Log("Spawning");
                 Instantiate(Data[CurrentWave].SpawnObject, transform.position, Quaternion.identity);
                 _spawnCount--;
 
@@ -51,14 +40,19 @@ namespace Assets.MazeTools.Scripts
 
             yield return new WaitForSeconds(Data[CurrentWave].WaveDelay);
 
-            Debug.Log("new Wave");
-
             _spawnCount = Data[CurrentWave].SpawnCount;
             _spawnDelay = Data[CurrentWave].SpawnDelay;
 
             StartCoroutine("Spawn");
+        }
 
-
+        [Serializable]
+        public struct WaveInfo
+        {
+            public int SpawnCount;
+            public float SpawnDelay;
+            public float WaveDelay;
+            public GameObject SpawnObject;
         }
     }
 }

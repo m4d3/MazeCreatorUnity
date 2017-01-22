@@ -104,7 +104,8 @@ public class MazeCreator : EditorWindow
         if (GUILayout.Button("Set Selected As End"))
             _endTile = new Vector2((int) Selection.transforms[0].position.x, (int) Selection.transforms[0].position.z);
 
-        if (GUILayout.Button("Solve Maze")) {
+        if (GUILayout.Button("Solve Maze"))
+        {
             _solvedPath = SolveMaze(_floor, _entryTile, _endTile);
 
             _data.PathTiles = _solvedPath;
@@ -157,7 +158,8 @@ public class MazeCreator : EditorWindow
 
         EditorGUILayout.EndHorizontal();
 
-        if (GUILayout.Button("Build Pathborder")) {
+        if (GUILayout.Button("Build Pathborder"))
+        {
             _pathBorder = new List<Vector2>();
 
             _pathBorder = BuildBorder(_solvedPath, !_cutCorners);

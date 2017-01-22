@@ -18,15 +18,20 @@ namespace Assets.MazeTools.Scripts
         public MovableTilesTypes MoveableTiles;
         public bool SetTargetOnMouseDown;
 
+        public delegate void OnEndReached();
+        public OnEndReached PathEndReachedCallback;
+
         private Vector2 _currentPosition;
         private Vector2 _moveTarget;
-
         private List<Vector2> _solvedPath;
         private List<Vector2> _tiles;
         private int _solvedTileIndex;
         private bool _solved;
-
         private MazeData _data;
+
+        private void Awake() {
+            _solvedPath = new List<Vector2>();
+        }
 
         private void Start() {
             _moveTarget = _currentPosition = new Vector2((int)transform.position.x, (int)transform.position.z);
@@ -59,8 +64,7 @@ namespace Assets.MazeTools.Scripts
             if (!_tiles.Contains(newTarget)) return;
 
             SolveMaze(_tiles, newTarget);
-            _solvedTileIndex = 0;
-            GetNextMoveTarget();
+            //GetNextMoveTarget();
 
             _solved = true;
         }
@@ -93,7 +97,12 @@ namespace Assets.MazeTools.Scripts
         {
             _currentPosition = _moveTarget;
 
-            if (_solvedTileIndex >= _solvedPath.Count - 1) return;
+            if (_solvedTileIndex >= _solvedPath.Count - 1)
+            {
+                if(PathEndReachedCallback != null)
+                    PathEndReachedCallback();
+                return;
+            }
 
             _solvedTileIndex++;
             _moveTarget = _solvedPath[_solvedTileIndex];
@@ -106,7 +115,12 @@ namespace Assets.MazeTools.Scripts
             PathTile start = new PathTile(new Vector2((int)_currentPosition.x, (int)_currentPosition.y));
             PathTile end = new PathTile(target);
 
-            _solvedPath = new List<Vector2>();
+            if(_solvedPath.Count > 1)
+                if(_solvedPath[_solvedPath.Count - 1] == target) return;
+
+            _solvedTileIndex = 0;
+            _solvedPath.Clear();
+
             List<Vector2> visitedCells = new List<Vector2>();
 
             Queue<PathTile> queue = new Queue<PathTile>();
