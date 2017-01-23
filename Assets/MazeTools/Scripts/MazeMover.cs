@@ -103,6 +103,7 @@ namespace Assets.MazeTools.Scripts
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+            transform.LookAt(new Vector3(_moveTarget.x, transform.position.y, _moveTarget.y));
         }
 
         private List<Vector2> SearchNeighbors(Vector2 cell)

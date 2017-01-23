@@ -346,14 +346,14 @@ MonoBehaviour:
   AddFloor: 0
   AddPath: 0
   AddWalls: 0
-  Height: 10
-  Width: 10
-  MinPathLength: 100
-  RandomSolve: 0
   BorderWidth: 3
   CutCorners: 1
+  Height: 10
+  MinPathLength: 100
+  RandomSolve: 0
   StopCreation: 1
   TilePrefab: {fileID: 1278474854446778, guid: 3af25823bcd047f45914a6f45ac900f4, type: 2}
+  Width: 10
 --- !u!4 &1527058641
 Transform:
   m_ObjectHideFlags: 0

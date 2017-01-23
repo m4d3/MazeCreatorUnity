@@ -5,12 +5,14 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
+    public float Speed;
     private MazeMover _movingScript;
 
 	// Use this for initialization
 	void Start ()
 	{
 	    _movingScript = GetComponent<MazeMover>();
+	    _movingScript.Speed = Speed;
 	    _movingScript.ReachedEndCallback = ReachedEnd;
 	}
 	
