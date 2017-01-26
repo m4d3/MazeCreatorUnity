@@ -2,13 +2,14 @@
 
 public class Tower : MonoBehaviour
 {
+    private readonly float _shootDelay = 4.0f;
+    private Vector3 _aimTarget;
     private float _buildingStatus;
     private float _bulletSpeed = 3.0f;
     private float _currentDelay;
     private bool _isBuild;
     private MazePlacer _placerComp;
     private SelectionComponent _selectionComp;
-    private readonly float _shootDelay = 4.0f;
     public float BuildingTime;
     public GameObject Bullet;
     public float ShootRadius;
@@ -27,10 +28,13 @@ public class Tower : MonoBehaviour
     private void Update()
     {
         if (_isBuild)
-            if (_currentDelay < _shootDelay)
-                _currentDelay += Time.deltaTime;
+            if (LookAtNearestEnemy())
+                if (_currentDelay < _shootDelay)
+                    _currentDelay += Time.deltaTime;
+                else
+                    Shoot();
             else
-                Shoot();
+                _currentDelay = _shootDelay;
     }
 
     private void BuildingFinished()
@@ -53,18 +57,18 @@ public class Tower : MonoBehaviour
         return false;
     }
 
-    private void Shoot()
+    private bool LookAtNearestEnemy()
     {
-        int layerMask = 1 << 8;
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, ShootRadius, layerMask);
+        var layerMask = 1 << 8;
+        var hitColliders = Physics.OverlapSphere(transform.position, ShootRadius, layerMask);
         Enemy closestEnemy = null;
-        float distance = ShootRadius;
+        var distance = ShootRadius;
 
-        foreach (Collider hitCollider in hitColliders)
+        foreach (var hitCollider in hitColliders)
         {
             if (!hitCollider.GetComponent<Enemy>()) continue;
 
-            float calculatedDistance = Vector3.Distance(hitCollider.transform.position, transform.position);
+            var calculatedDistance = Vector3.Distance(hitCollider.transform.position, transform.position);
 
             if (!(calculatedDistance < distance)) continue;
 
@@ -72,43 +76,48 @@ public class Tower : MonoBehaviour
             closestEnemy = hitCollider.GetComponent<Enemy>();
         }
 
-        if (closestEnemy == null) return;
+        if (closestEnemy == null) return false;
 
-        Vector3 enemySpeedVector = closestEnemy.transform.forward * closestEnemy.Speed;
-        Vector3 enemyPosition = closestEnemy.transform.position;
-        Vector3 target = CalculateInterceptCourse(enemyPosition,
+        var enemySpeedVector = closestEnemy.transform.forward * closestEnemy.Speed;
+        var enemyPosition = closestEnemy.transform.position;
+        var target = CalculateInterceptCourse(enemyPosition,
             enemySpeedVector, transform.position, _bulletSpeed);
 
-        if (target == Vector3.zero) return;
+        if (target == Vector3.zero) return false;
 
         target.Normalize();
-        float interceptionTime1 = FindClosestPointOfApproach(enemyPosition, enemySpeedVector, transform.position,
+        var interceptionTime1 = FindClosestPointOfApproach(enemyPosition, enemySpeedVector, transform.position,
             target * _bulletSpeed);
-        Vector3 aimTarget = closestEnemy.transform.position + enemySpeedVector * interceptionTime1;
+        _aimTarget = closestEnemy.transform.position + enemySpeedVector * interceptionTime1;
 
-        Debug.DrawLine(transform.position, aimTarget);
-        transform.LookAt(aimTarget);
+        Debug.DrawLine(transform.position, _aimTarget);
+        transform.LookAt(_aimTarget);
 
-        GameObject newBullet = Instantiate(Bullet, transform.position, Quaternion.identity);
-        newBullet.transform.LookAt(aimTarget);
+        return true;
+    }
+
+    private void Shoot()
+    {
+        var newBullet = Instantiate(Bullet, transform.position, Quaternion.identity);
+        newBullet.transform.LookAt(_aimTarget);
         _currentDelay = 0;
     }
 
     private Vector3 CalculateInterceptCourse(Vector3 aTargetPos, Vector3 aTargetSpeed, Vector3 aInterceptorPos,
         float aInterceptorSpeed)
     {
-        Vector3 targetDir = aTargetPos - aInterceptorPos;
+        var targetDir = aTargetPos - aInterceptorPos;
 
-        float iSpeed2 = aInterceptorSpeed * aInterceptorSpeed;
-        float tSpeed2 = aTargetSpeed.sqrMagnitude;
-        float fDot1 = Vector3.Dot(targetDir, aTargetSpeed);
-        float targetDist2 = targetDir.sqrMagnitude;
-        float d = fDot1 * fDot1 - targetDist2 * (tSpeed2 - iSpeed2);
+        var iSpeed2 = aInterceptorSpeed * aInterceptorSpeed;
+        var tSpeed2 = aTargetSpeed.sqrMagnitude;
+        var fDot1 = Vector3.Dot(targetDir, aTargetSpeed);
+        var targetDist2 = targetDir.sqrMagnitude;
+        var d = fDot1 * fDot1 - targetDist2 * (tSpeed2 - iSpeed2);
         if (d < 0.1f) // negative == no possible course because the interceptor isn't fast enough
             return Vector3.zero;
-        float sqrt = Mathf.Sqrt(d);
-        float S1 = (-fDot1 - sqrt) / targetDist2;
-        float S2 = (-fDot1 + sqrt) / targetDist2;
+        var sqrt = Mathf.Sqrt(d);
+        var S1 = (-fDot1 - sqrt) / targetDist2;
+        var S2 = (-fDot1 + sqrt) / targetDist2;
 
         if (S1 < 0.0001f)
             if (S2 < 0.0001f)
@@ -124,9 +133,9 @@ public class Tower : MonoBehaviour
 
     public static float FindClosestPointOfApproach(Vector3 aPos1, Vector3 aSpeed1, Vector3 aPos2, Vector3 aSpeed2)
     {
-        Vector3 PVec = aPos1 - aPos2;
-        Vector3 SVec = aSpeed1 - aSpeed2;
-        float d = SVec.sqrMagnitude;
+        var PVec = aPos1 - aPos2;
+        var SVec = aSpeed1 - aSpeed2;
+        var d = SVec.sqrMagnitude;
         // if d is 0 then the distance between Pos1 and Pos2 is never changing
         // so there is no point of closest approach... return 0
         // 0 means the closest approach is now!
